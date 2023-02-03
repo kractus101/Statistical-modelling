@@ -1,0 +1,278 @@
+---
+title: "R Assignment:03"
+output:
+  pdf_document:
+    latex_engine: xelatex
+author: Keya Adhyaru
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1 - Local Advertising
+
+Upon request, the local newspaper will provide data to help potential advertisers target their ads.
+The paper provides a random sample of 12 advertisements per day, 4 from each section of the
+paper, for the previous week and the number of inquiries the ad generated for the business.
+
+**a)** Ignoring any potential interaction between Day and Section, are there any differences in the
+average number of inquiries by day?
+
+**Answer:**
+
+Considering the dataset given, we will be using ANOVA to analyse our data, with categorical predictors- Day and Section and numeric continuous response- Inquiry.
+
+Setting up Hypothesis:
+
+*H*~*0*~ : There is no difference in the average number of inquiries by day.
+
+*H*~*A*~ : Not all average number of inquiries per day are equal.
+
+```{r}
+library(readr)
+advertising <- read_csv("Path/to/advertising.csv")
+
+#Applying additive model to avoid potential interaction of Section on Day.
+advers_mod <- aov(Inquiries~ Day+ Section, data= advertising)
+anova_result <- summary(advers_mod)
+anova_result
+```
+From the applied method, we can observe that p-val= 1.19e-05< 0.05, so we will reject the null hypothesis and further conclude that there exist significant effect of Day on average Inquiry received.
+
+
+**b)** If “yes” to a), which day would you prefer to advertise on if maximizing inquiries was your
+objective?
+
+**Answer:**
+
+To further analyse the data, we will conduct post-hoc test, Tukey HSD Test. It allows for all possible pairwise comparisons while keeping the family-wise error rate low.
+
+```{r}
+#FInding which day has more effect on larger number of Inquiries.
+TukeyHSD(advers_mod, "Day")
+
+```
+
+From the applied method, we can observe that the highest magnitude of difference amongst all the days examined from the result, is -4.91666667 for Thursday-Friday with the lowest adjusted p-value, 0.0000019<0.05. We hereby conclude that Friday is the day when highest number of Inquires were experienced.
+
+**c)** Create an interaction plot for Day and Section on Inquiries. Based on this plot, does
+there appear to be an interaction; why or why not? (see the examples in the help file for
+interaction.plot on how to create these plots)
+
+**Answer:**
+
+Constructing interaction plot between day and section from the given dataset:
+
+```{r}
+  with(advertising, interaction.plot(x.factor = Day, trace.factor = Section, response = Inquiries))
+```
+
+From this plot, we can surely say that there exists an interaction between these two variables, as all the lines are depicting the sections are crossing each other at several different points. These fields are either converging or diverging at one or the other day which shows the evidence that there exists interaction.
+
+**d)** Test for an interaction between Day and Section. Does your result have an effect on your
+answer in part a) of this question? **Bonus for determining which section and day
+combination sees the most inquiries using emmeans** [1 mark].
+
+**Answer:**
+
+To test the interaction between both the variables, we would apply multiplicative model on ANOVA.
+
+```{r}
+mult_anova <- aov(Inquiries~ Day * Section, data= advertising)
+mult_result <- summary(mult_anova)
+mult_result
+```
+From the result, we can observe that p-value of Day=8.52e-10 <0.05, p-value of section =  8.50e-06<0.05 and p-value of interaction=  1.12e-07<0.05. Considering these low p-value we reject the null hypothesis and can conclude that there is strong significance of both individual variables as well as their interaction on the response variable. Comparing the result of the test that we performed in part a), we witness larger magnitude of p-value, yet same conclusion- having significant effect on average number of inquiries experienced.
+
+```{r}
+# determining which section and day combination sees the most inquiries using emmeans
+
+library(emmeans)
+emmeans(mult_anova, spec = ~ Day | Section)
+```
+
+By approaching emmean , we have came to conclusion that highest number of inquiries were reported on friday for section news.
+
+**e)** The newspaper currently charges the same amount per ad for any day and any section in
+the newspaper. Assuming you work for the paper, do you have any recommendations for
+the paper in terms of pricing?
+
+**Answer:**
+
+If I were to work for the paper company, after analyzing the interaction plot and reading the conclusion of part d), considering the average inquiries for particular day per section, I would charge more for Friday for News and sports articles, Monday for Business articles, while put the medium charge  on thursday specific to Business articles , tuesday for News and Business articles. Lastly, I would plan to put minimal charges on advertisements for the sports section for monday, tuesday, wednesday and thursday.
+
+\newpage
+
+## Question 2 - Ground Water
+
+Water treatment plants add bicarbonate to water in order to keep microorganisms in the system
+happy and healthy.
+The data in groundwater.csv is a sample of pH is measured on a logarithmic scale from 0 to 14
+and bicarbonate levels are measured in parts per million (ppm)
+
+**Parametric**
+
+**a)** Use a linear model and parametric method to determine if there is a relationship between
+bicarbonate levels and pH in the water. (Still check and comment on assumptions, but use
+a parametric method regardless!)
+
+**Answer:**
+
+Following are the assumptions to be met in order to conduct parametric test for linear model:
+
+- **Independence of the observations:**  Each subject should belong to only one group. There is no relationship between the observations in each group. Having repeated measures for the same participants is not allowed.
+- **Outliers:** There must be no significant outliers in any cell of the design.
+- **Normality:** the data for each design cell should be approximately normally distributed.
+- **Homogeneity of variances:** The variance of the outcome variable should be equal in every cell of the design.
+
+We assume that all observations are independent in nature as they are randomly sampled and there no outliers in the observation.
+
+```{r}
+library(readr)
+groundwater <- read_csv("Path/to/groundwater.csv")
+```
+
+
+Checking normality:
+
+```{r}
+shapiro.test(groundwater$Bicarbonate)
+```
+From the shapiro test of normality we got, p-val= 0.6736 >0.05 for Bicarbonate and p-value = 0.4981 >0.05 for pH.We can conclude that the observations of the dataset shows normality.
+
+\newpage
+Now, we will build a simple linear regression model for the given data .
+Firstly, we will check if these variables have a linear relationship amongst them by conducting a correlation test.
+
+```{r}
+cor(groundwater$pH, groundwater$Bicarbonate)
+```
+From the above test, we get the pearson’s coefficient r= -0.3395105. It suggests that pH and bicarbonates possess weak negative linear relationships.
+
+Despite of being weak relationship, we will evaluate the model,
+```{r}
+linear_mod <- lm(formula = pH ~ Bicarbonate, data = groundwater)
+summary(linear_mod)
+```
+
+Linear model constructed can be written as follows:
+
+$$
+\hat{L} = 8.097595 -0.003052 Bicarb
+$$
+
+Setting up hypothesis:
+
+
+*H*~*0*~ : $\beta1$=0 (There is no linear relationship between pH and Bicarbonate)
+
+*H*~*A*~ : $\beta1 \neq$ 0 (There is linear relationship between pH and Bicarbonate)
+
+Results:
+
+While conducting the test, We got p-val:0.04948 < 0.05 . So, we reject the null hypothesis and further conclude that there is enough evidence to prove that there exists a linear relationship among pH and Bicarbonate.
+
+**b)** Plot the data and regression line. Include appropriate labels and title. Bonus for including
+confidence and prediction intervals on this plot [2 marks].
+
+**Answer:**
+
+Plotting the scatterplot and regression line for the respective data,
+
+```{r}
+#adding prediction and store it in the datasetname "new_data"
+pred.int <- predict(linear_mod, interval="prediction")
+new_data <- cbind(groundwater, pred.int)
+
+#Regression line + 95% confidence intervals
+library(ggplot2)
+p <- ggplot(new_data, aes(Bicarbonate, pH)) + geom_point() + stat_smooth(method= lm)
+
+# Adding prediction intervals
+p+geom_line(aes(y= lwr), color= "red", linetype= "dashed") + geom_line(aes(y=upr), 
+color = "red", linetype = "dashed")
+
+```
+
+Prediction interval with respect to given data:
+```{r}
+pred.int
+```
+Confidence interval with respect to given data:
+```{r}
+#predict confidence interval for the linear model
+conf.int <- predict(linear_mod, interval="confidence")
+conf.int
+
+```
+
+
+**c)** Provide a 95% parametric confidence interval for the true slope in the linear model.
+
+**Answer:**
+
+Constructing 95% confidence interval for the true slope in the linear model:
+```{r}
+
+confint(linear_mod, parm = "Bicarbonate", level = 0.95)
+```
+The 95% confidence interval of the true slope is (-0.006097, -7.33803e-06)
+
+**Non-Parametric**
+
+**d)** Use a linear model and non-parametric method to determine if there is a relationship
+between bicarbonate levels and pH in the water.
+
+**Answer:**
+
+If our assumptions are not satisfied, we can use non-parametric methods to run the tests.
+
+Setting hypothesis:
+
+*H*~*0*~ : $\beta1$=0 (There is no linear relationship between pH and Bicarbonate)
+
+*H*~*A*~ : $\beta1 \neq$ 0 (There is linear relationship between pH and Bicarbonate)
+
+```{r}
+B <- 10000
+grdwater_sim <- groundwater[, c("pH", "Bicarbonate")]
+grdwatr1_sim <- rep(NA, B)
+
+for (i in 1:B){
+  idx_sim <- sample(1:nrow(groundwater), size = nrow(groundwater), replace = FALSE)
+  grdwater_sim$pH <- grdwater_sim$pH[idx_sim]
+  mod_sim <- lm(pH ~ Bicarbonate, data = grdwater_sim)
+  grdwatr1_sim[i] <- mod_sim$coefficients[2]
+}
+
+non_param_p_val <- (length(which(abs(grdwatr1_sim) >= 
+                          abs(linear_mod$coefficients[2]))) + 1) / (B + 1)
+non_param_p_val
+```
+By conducting non parametric approach, we got the p-value = `r non_param_p_val`< 0.05 so we reject the null hypothesis and further conclude that there is evidence of linear relationship among Bicarbonate and pH.
+
+
+**e)**  Provide a 95% non-parametric confidence interval for the true slope parameter in the linear
+model.
+
+**Answer:**
+
+Providing non-parametric confidence interval for the true slope parameter in the linear model:
+
+```{r}
+library(boot)
+
+lm_wrapper <- function(x, index){
+  mod <- lm(pH ~ Bicarbonate, data = x[index, ])
+  mod$coefficients[2]
+}
+
+b1_bs <- boot(groundwater, statistic = lm_wrapper, R = 2000)
+boot.ci(b1_bs, type = "bca")
+```
+
+We are 95% confident that true slope lies under the interval mentioned under Bca parameter.
+
+(Note: I am unable to mention the result value in conclusion statement as everytime while knitting this document it generates different results due to bootstrapping).
