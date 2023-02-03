@@ -1,0 +1,152 @@
+---
+title: "R Assignment:04"
+output:
+  pdf_document:
+    latex_engine: xelatex
+author: Keya Adhyaru
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1 - Movies
+
+Looking for a way to predict box office receipts, an MGM producer collects the production costs,
+promotional costs, and book adaptation sales for 10 randomly sampled blockbuster movies, as well
+as their box office ticket sales (in millions of dollars). This year, he’s pulling out all the stops on
+his newest feature film. He is planning to spend $15 million on production costs, $20 million on
+promotional costs, and hopes to make $5 million on sales of book adaptations.
+
+**a) Fit a model to help predict the expected box office ticket sales. You do not need to perform any variable selection. Fit the response using the provided predictors and state the model equation.**
+
+**Answer:**
+
+Fitting a Linear Regression Model on Box Office Collection using all other predictors as:
+
+```{r}
+#Loading movies.csv file
+library(readr)
+movies <- read_csv("Path/to/movies.csv")
+
+box.lm <- (lm(Box ~ Production+ Promotional+ Books, data= movies))
+
+summary(box.lm)
+```
+
+By conducting multiple linear regression model, we observe different intercept for different predictor variable and further form following model equation:
+
+Box Office Tickets = 7.676 + 3.662* Production + 7.621* Promotional + 0.828*Books
+
+
+**b) Comment on the model fit. Does this seem to be a good model? Why or why not? What would you change?**
+
+**Answer:**
+
+The *R*^*2*^ of the model = 0.9667, which implies that 96.67% of variation in the box office collection can be explained by variation in all other predictor variables.
+
+Adjusted, which implies that all the variables are significant in predicting dependent variable. 
+
+p value of the model = 0.0000 < 0.05 (at 5% significance level), hence we have enough evidence to reject the null hypothesis and conclude that model is significant.
+
+This shows that model is a good fit on the data.
+
+**c) Calculate a 93% parametric confidence interval for the true model parameter associated with the Production variable.**
+
+**Answer:**
+
+Constructing 93% confidence interval for the true slope in the linear model:
+```{r}
+#new.dat <- data.frame(movies$Production)
+#predict(box.lm , newdata = new.dat, interval = 'confidence')
+confint(box.lm, parm = "Production", level = 0.93)
+```
+The 93% confidence interval for the true model parameter associated with
+the Production variable is (1.201, 6.121)
+
+**d) Provide the predicted box office ticket sales for his movie.**
+**Answer:**
+
+According to the model equation, the predicted box office ticket sales for his movie can be calculated as follows:
+
+Box Office Tickets = 7.676 + 3.662* 15 + 7.621* 20 + 0.828*5
+            7.676+ 54.93 + 152.42+ 4.14
+Box Office Ticket= 219.66
+
+\newpage
+**e) Calculate the 90% prediction interval for d).**
+
+**Answer:**
+
+Calculating 90% prediction interval for the model
+```{r}
+Production = 15
+Promotional = 20
+Books = 5
+test <- as.data.frame(cbind(Production,Promotional,Books))
+predict(box.lm,  newdata = test,  interval = "prediction",level = 0.90)
+```
+The 90% prediction interval for the model lies between 176.65 and 261.67
+
+\newpage
+## Question 2 - Credit Cards
+
+A financial institution that issues credit cards for subprime borrowers wants to identify its credit
+card applicants who do not exceed a default chance threshold of 30% to approve an application.
+It randomly selected 41 past credit card holders and investigated their monthly salary, monthly
+debt, and marital status at the time of issuance of its credit card and whether they defaulted after
+taking the credit card. (In the data, Default = 1 means the customer defaulted and 0 otherwise;
+Marital = 1 means married and 0 otherwise.)
+
+**a) Identify the response variable and the predictor variables.**
+**Answer:**
+
+Observing the given data, we want to find the status of default of credit card for subprime borrowers so from the problem statement we find that 'Default' is the response variable and 'Salary', 'Dept', 'Marital' are predictor variable.
+
+**b) Determine the logistic regression model for the purpose of the institution.**
+
+**Answer:**
+
+```{r}
+#Loading DefaultRate.csv file
+library(readr)
+DefaultRate <- read_csv("Path/to/DefaultRate.csv")
+```
+
+Conducting logistic regression model for binomial response variable:
+
+```{r}
+default.glm <- (glm(Default ~ Salary+ Debt+ Marital, data = DefaultRate, family = binomial))
+summary(default.glm)
+```
+
+**c) Does the institution issue its credit card to a married customer with monthly salary of 2000 and monthly debt of 1400.**
+
+**Answer**
+
+```{r}
+new.data <- data.frame(Salary=2000, Debt=1400, Marital=1)
+predict.glm(default.glm,newdata= new.data, type='response')
+```
+The probability that institution issue its credit card to a married customer with monthly salary of 2000 and monthly debt of 1400 is 0.2351833 < 0.3 so institute will issue its credit card to this customer.
+
+**d) Does the institution issue its credit card to a married customer with monthly salary of 3208 and monthly debt of 2200.**
+
+**Answer:**
+
+```{r}
+
+new.data <- data.frame(Salary=3208, Debt=2200, Marital=1)
+predict.glm(default.glm,newdata= new.data, type='response')
+```
+The probability that institution issue its credit card to a married customer with monthly salary of 3208 and monthly debt of 2200 is 0.2574774 < 0.3 so institute will issue its credit card to this customer.
+
+**e) Does the institution issue its credit card to a single customer with monthly salary of 3408 and monthly debt of 1700.**
+
+**Answer:**
+
+```{r}
+new.data <- data.frame(Salary=3408, Debt=1700, Marital=0)
+predict.glm(default.glm,newdata= new.data, type='response')
+```
+The probability that institution issue its credit card to a married customer with monthly salary of 3408 and monthly debt of 1700 is 0.3318034 > 0.3 so institute will not issue its credit card to this customer.
